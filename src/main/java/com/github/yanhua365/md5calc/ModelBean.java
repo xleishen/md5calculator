@@ -4,6 +4,10 @@ public class ModelBean {
     private String filePath;
     private String result;
 
+
+
+    private String outFormat;
+
     public ModelBean() {
     }
 
@@ -21,5 +25,12 @@ public class ModelBean {
 
     public void setResult(final String result) {
         this.result = result;
+    }
+    public String getOutFormat() {
+        return outFormat;
+    }
+
+    public void setOutFormat(String outFormat) {
+        this.outFormat = outFormat;
     }
 }

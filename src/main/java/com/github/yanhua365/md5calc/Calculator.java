@@ -1,5 +1,7 @@
 package com.github.yanhua365.md5calc;
 
+import com.sun.javafx.binding.StringFormatter;
+
 import javax.swing.*;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -17,11 +19,15 @@ import java.util.List;
  * 文件或目录的md5吗计算器
  */
 public class Calculator {
+    public static final String JSON_FORMAT = "JSON";
+    public static final String XML_FORMAT = "XML";
     private JTextField txtFilePath;
     private JButton btnSelectFile;
     private JTextArea txtResult;
     private JPanel rootPanel;
     private JButton btnCalculate;
+    private JRadioButton rdoJsonFormat;
+    private JRadioButton rdoXmlFormat;
 
     final JFileChooser fileChooser;//文件选择器
 
@@ -30,9 +36,17 @@ public class Calculator {
     public Calculator() {
 
         model = new ModelBean();
+        model.setOutFormat(JSON_FORMAT);
 
         fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(rdoJsonFormat);
+        group.add(rdoXmlFormat);
+
+        rdoJsonFormat.setSelected(true);
+
 
         btnSelectFile.addActionListener(new ActionListener() {
             @Override
@@ -52,7 +66,12 @@ public class Calculator {
                 }
                 File selectedFile = new File(model.getFilePath());
                 List<FileInfoBean> fileInfoBeans = selectedFile.isDirectory()?calcDir(selectedFile):calcFile(selectedFile);
-                model.setResult(coverToXml(fileInfoBeans));
+                if(rdoXmlFormat.isSelected()){
+                    model.setResult(coverToXml(fileInfoBeans));
+                }else if(rdoJsonFormat.isSelected()){
+                    model.setResult(coverToJson(fileInfoBeans));
+                }
+
                 setData(model);
             }
         });
@@ -71,6 +90,19 @@ public class Calculator {
             e.printStackTrace();
         }
         return writer.toString();
+    }
+
+    private String coverToJson(List<FileInfoBean> fileInfoBeanList) {
+        StringBuilder result = new StringBuilder();
+        for(FileInfoBean file : fileInfoBeanList){
+            if(result.length()>0)
+                result.append(",\n");
+
+            String tpl = "  {\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}";
+            result.append(String.format(tpl,"url",file.getUrl(),"md5",file.getMd5(),"size",file.getSize()));
+        }
+
+        return "[\n"+result.toString()+"\n]";
     }
 
     private List<FileInfoBean> calcFile(File file) {
