@@ -3,20 +3,46 @@ apply plugin: 'java'
 sourceCompatibility = 1.6
 version = '0.1.0-SNAPSHOT'
 
+configurations {
+    antTask
+}
+
 jar {
     manifest {
-        attributes 'Implementation-Title': 'Md5Calculator', 'Implementation-Version': version
+        attributes 'Implementation-Title': 'Md5Calculator', 'Implementation-Version': version,
+                'Main-Class':'com.github.yanhua365.md5calc.Calculator','Class-Path':'commons-codec-1.8.jar forms_rt-12.1.6.jar'
     }
 }
 
 repositories {
+    flatDir dirs: "${rootDir}/lib"
     mavenCentral()
 }
 
+//在gradle中使用intellij 的javac2编译未成功，暂时使用ant
 dependencies {
+    antTask name: 'javac2', version: '12.1.6'
+    antTask name: 'forms_rt', version: '12.1.6'
+    antTask name: 'asm4-all', version: '12.1.6-idea'
+    antTask group: 'org.jdom', name: 'jdom', version: '1.1'
+
     compile 'commons-codec:commons-codec:1.8'
     testCompile group: 'junit', name: 'junit', version: '4.+'
 }
+
+task compileJava(overwrite: true, dependsOn: configurations.compile.getTaskDependencyFromProjectDependency(true, 'jar')) {
+    doLast {
+        project.sourceSets.main.output.classesDir.mkdirs()
+        ant.taskdef name: 'javac2', classname: 'com.intellij.ant.Javac2', classpath: configurations.antTask.asPath
+        ant.javac2 srcdir: project.sourceSets.main.java.srcDirs.join(':'),
+                classpath: project.sourceSets.main.compileClasspath.asPath,
+                destdir: project.sourceSets.main.output.classesDir,
+                source: sourceCompatibility,
+                target: targetCompatibility,
+                includeAntRuntime: false
+    }
+}
+
 
 test {
     //systemProperties 'property': 'value'
